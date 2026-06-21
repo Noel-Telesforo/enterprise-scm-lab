@@ -1,0 +1,50 @@
+name: Reusable Build
+
+on:
+  # Esto lo convierte en un reutilizable
+  workflow_call:
+    # Entradas que puede recibir
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '20'
+      run-tests:
+        description: 'Whether to run tests'
+        required: false
+        type: boolean
+        default: true
+
+    # Secrets que puede necesitar (si tu viera)
+    secrets:
+      NPM_TOKEN:
+        required: false
+
+# Permisos mínimos para este workflow reutilizable
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (if enabled)
+        if: ${{ inputs.run-tests == true }}
+        run: npm test
+
+      - name: Build Docker image
+        run: docker build -t enterprise-scm-lab:${{ github.sha }} .
