@@ -19,55 +19,15 @@ permissions:
 
 # Jobs definidos en el workflow
 jobs:
-  # job 1: Tests en múltiples versiones de Node
-  test:
-    name: Test on Node ${{ matrix.node-version }}
-    runs-on: ubuntu-latest
-
-    # Estrategia de matriz
-    strategy:
-      # Si una versión falla, las demás siguen ejecutándose
-      fail-fast: false
-      # Lista de versiones a probar
-      matrix:
-        node-version: [18, 20, 22, 26]
-
-    steps:
-      # 1. Descargar el código
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. Configurar Node.js con caché automático
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          # Caché guarda .npm para no reinstalar todo
-          cache: 'npm'
-
-      # 3. Instalar dependencias
-      - name: Install dependencies
-        run: npm ci
-
-      # 4. Ejecutar tests
-      - name: Run tests
-        run: npm test
-
-      # 5. Bloquea si CodeQL y Dependabot encuentran vulnerabilidades
-      - name: Check for vulnerabilities (npm audit)
-        run: npm audit --production --audit-level(high)
-        continue-on-error: false
-
-  # Job 2: Construye docker, solo despues de que los test pasen
-  docker-build:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-    # Este job es para que este test termine exitosamente
-    needs: test
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t enterprise-scm-lab:${{github.sha }} .
+  # Este job llama al reusable workflow
+  call-build:
+    name: Call Reusable Build
+    # Usa el reusable workflow
+    uses: ./.github/workflows/reusable-build.yml
+    # Pasa los inputs personalizados
+    with:
+      node-version: '20'
+      run-tests: true
+    # Pasa secrets si los hubiera
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
