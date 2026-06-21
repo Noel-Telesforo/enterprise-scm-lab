@@ -53,6 +53,11 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # 5. Bloquea si CodeQL y Dependabot encuentran vulnerabilidades
+      - name: Check for vulnerabilities (npm audit)
+        run: npm audit --production --audit-level(high)
+        continue-on-error: false
+
   # Job 2: Construye docker, solo despues de que los test pasen
   docker-build:
     name: Build Docker Image
