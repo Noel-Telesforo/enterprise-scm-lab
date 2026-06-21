@@ -11,4 +11,4 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-module.exports = app;
+module.exports = app;// Added logging
